@@ -1,5 +1,4 @@
-import pygame 
-import asyncio
+import pygame
 from math import sin, cos
 
 pygame.init()
@@ -41,77 +40,70 @@ def text_display(letter, x, y):
 # Main loop
 run = True
 dragging = False
-last_mouse_pos = (0,0)
+last_mouse_pos = (0,0
+                  )
+while run:
+    screen.fill(black)
 
-async def main():
-    global run, dragging, last_mouse_pos, A, B
+    # Z-buffer and background buffer
+    z = [0] * screen_size
+    b = [' '] * screen_size
 
-    while run:
-        screen.fill(black)
+    # Generate the 3D donut and project it to 2D
+    for j in range(0, 628, theta_step):
+        for i in range(0, 628, phi_step):
+            sinA, cosA = sin(A), cos(A)
+            sinB, cosB = sin(B), cos(B)
+            sini, cosi = sin(i), cos(i)
+            sinj, cosj = sin(j), cos(j)
 
-        # Z-buffer and background buffer
-        z = [0] * screen_size
-        b = [' '] * screen_size
+            h = cosj + 2  # Distance to donut center
+            D = 1 / (sini * h * sinA + sinj * cosA + 5)  # Depth calculation
+            t = sini * h * cosA - sinj * sinA
 
-        # Generate the 3D donut and project it to 2D
-        for j in range(0, 628, theta_step):
-            for i in range(0, 628, phi_step):
-                sinA, cosA = sin(A), cos(A)
-                sinB, cosB = sin(B), cos(B)
-                sini, cosi = sin(i), cos(i)
-                sinj, cosj = sin(j), cos(j)
+            x = int(x_offset + 40 * D * (cosi * h * cosB - t * sinB))
+            y = int(y_offset + 20 * D * (cosi * h * sinB + t * cosB))
 
-                h = cosj + 2  # Distance to donut center
-                D = 1 / (sini * h * sinA + sinj * cosA + 5)  # Depth calculation
-                t = sini * h * cosA - sinj * sinA
+            o = int(x + columns * y)  # 1D index for 2D screen buffer
+            N = int(8 * ((sinj * sinA - sini * cosj * cosA) * cosB - sini * cosj * sinA - sinj * cosA - cosi * cosj * sinB))
 
-                x = int(x_offset + 40 * D * (cosi * h * cosB - t * sinB))
-                y = int(y_offset + 20 * D * (cosi * h * sinB + t * cosB))
+            if 0 <= y < rows and 0 <= x < columns and D > z[o]:
+                z[o] = D
+                b[o] = chars[max(0, min(N, len(chars) - 1))]
 
-                o = int(x + columns * y)  # 1D index for 2D screen buffer
-                N = int(8 * ((sinj * sinA - sini * cosj * cosA) * cosB - sini * cosj * sinA - sinj * cosA - cosi * cosj * sinB))
+    # Render each character to the screen
+    x_start, y_start = 0, 0
+    for i in range(len(b)):
+        if i % columns == 0 and i != 0:  # Move to next line
+            y_start += y_sep
+            x_start = 0
+        text_display(b[i], x_start, y_start)
+        x_start += x_sep
 
-                if 0 <= y < rows and 0 <= x < columns and D > z[o]:
-                    z[o] = D
-                    b[o] = chars[max(0, min(N, len(chars) - 1))]
+    # Update rotation angles
+    A += 0.04
+    B += 0.02
 
-        # Render each character to the screen
-        x_start, y_start = 0, 0
-        for i in range(len(b)):
-            if i % columns == 0 and i != 0:  # Move to next line
-                y_start += y_sep
-                x_start = 0
-            text_display(b[i], x_start, y_start)
-            x_start += x_sep
+    pygame.display.update()
 
-        # Update rotation angles
-        A += 0.04
-        B += 0.02
-
-        pygame.display.update()
-
-        # Event handling
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                run = False
-            elif event.type == pygame.MOUSEBUTTONDOWN:
-                if event.button == 1: # Left-click
-                    dragging = True
-                    last_mouse_pos =  event.pos
-            elif event.type == pygame.MOUSEBUTTONUP:
-                if event.button == 1: # Left-click
-                    dragging = False
-            elif event.type == pygame.MOUSEMOTION:
-                if dragging:
-                    x, y = event.pos
-                    dx = x - last_mouse_pos[0]
-                    dy = y - last_mouse_pos[1]
-                    A += dx * 0.01
-                    B += dy * 0.01
-                    last_mouse_pos = event.pos
-
-    await asyncio.sleep(0)                 
-
-asyncio.run(main())
+    # Event handling
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            run = False
+        elif event.type == pygame.MOUSEBUTTONDOWN:
+            if event.button == 1: # Left-click
+                dragging = True
+                last_mouse_pos =  event.pos
+        elif event.type == pygame.MOUSEBUTTONUP:
+            if event.button == 1: # Left-click
+                dragging = False
+        elif event.type == pygame.MOUSEMOTION:
+            if dragging:
+                x, y = event.pos
+                dx = x - last_mouse_pos[0]
+                dy = y - last_mouse_pos[1]
+                A += dx * 0.01
+                B += dy * 0.01
+                last_mouse_pos = event.pos
 
 pygame.quit()
