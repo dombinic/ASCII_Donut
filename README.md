@@ -1,4 +1,4 @@
-- Installation Requirements
+- Installation Requirements: 
   Python 3.x
   Pygame library
 
