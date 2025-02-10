@@ -3,7 +3,7 @@ import pandas as pd
 from sklearn.linear_model import LinearRegression
 import joblib
 
-# 1️⃣ Create Simulated Dataset
+# Simulated Dataset
 # Inputs: speed_input (rotation speed preference), luminance_input (brightness preference)
 # Outputs: A_step and B_step (adjustments to rotation speed)
 speed_range = np.linspace(0.5, 3.0, 10)  # Speed values from 0.5 to 3.0
@@ -30,13 +30,13 @@ df = pd.DataFrame(data)
 print("Sample Data:")
 print(df.head())  # Display the first few rows of the dataset
 
-# 2️⃣ Train the Machine Learning Model
+# Train Model
 X = df[['speed_input', 'luminance_input']]
 y = df[['A_step', 'B_step']]
 
 model = LinearRegression()
 model.fit(X, y)
 
-# 3️⃣ Save the Trained Model
+# Save Trained Model
 joblib.dump(model, "Rotation_Model.pkl")
 print("✅ Model retrained and saved as 'Rotation_Model.pkl'")
