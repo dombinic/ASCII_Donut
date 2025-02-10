@@ -1,11 +1,37 @@
 import pygame
 import joblib
-import numpy as np
+import pandas as pd
 from math import sin, cos
+import csv, os
 
 # Load the trained machine learning model
-model = joblib.load("Rotation_Model.pkl")
+try:
+    model = joblib.load("Rotation_Model.pkl")
+except FileNotFoundError:
+    print("No trained model found!! Run 'train_model_py' first.")
+    exit()
 
+DATA_FILE = 'user_data.csv'
+
+# Logs interaction to a csv file for ML training
+def log_data(speed_input, luminance_input, A_step, B_step):
+    file_exists = os.path.exists(DATA_FILE)
+
+    with open(DATA_FILE, 'a', newline = '') as file:
+        writer = csv.writer(file)
+        if not file_exists:
+            writer.writerow(['speed_input', 'luminance_input', 'A_step', 'B_step'])
+        writer.writerow([speed_input, luminance_input, A_step, B_step])
+        
+def retrain_model():
+    if os.path.exists(DATA_FILE):
+        with open(DATA_FILE, 'r') as f:
+            num_lines = sum(1 for line in f) - 1
+        if num_lines >= 50 and num_lines % 50 == 0:
+            print('Retraining model with new user data...')
+            os.system('python3 train_model.py')
+    
+    
 pygame.init()
 
 # Colors
@@ -73,9 +99,12 @@ while run:
     screen.fill(black)
 
     # Predict rotation speed adjustments using the ML model
-    prediction = model.predict(np.array([[speed_input, luminance_input]]))
+    prediction = model.predict(pd.DataFrame([[speed_input, luminance_input]], columns = ['speed_input', 'luminance_input']))
     A_step, B_step = prediction[0]
 
+    log_data(speed_input, luminance_input, A_step, B_step)
+    retrain_model()
+        
     # Z-buffer and background buffer
     z = [0] * screen_size
     b = [' '] * screen_size
@@ -146,7 +175,7 @@ while run:
                 # If mouse is released over the reset button, reset the speed
                 if reset_pressed and button_x <= mouse_x <= button_x + button_width and button_y <= mouse_y <= button_y + button_height:
                     speed_input, luminance_input = default_speed, default_luminance
-                    print("🔄 Reset Speed to Default!")
+                    print("Reset Speed to Default!")
 
                 reset_pressed = False  # Reset the button state
                 dragging = False  # Stop dragging
@@ -161,3 +190,4 @@ while run:
                 last_mouse_pos = event.pos
 
 pygame.quit()
+
