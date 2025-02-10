@@ -64,7 +64,7 @@ y_offset = rows // 2
 A, B = 0, 0  # Rotation angles
 theta_step, phi_step = 10, 1
 
-chars = '.,-~:;=!*#$@'  # ASCII luminance characters
+chars = '.,-~:;=!*#$@'  # ASCII characters
 
 # Default values for user interaction
 default_speed = 1.5
